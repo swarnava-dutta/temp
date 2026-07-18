@@ -41,9 +41,23 @@ git clone https://github.com/GoogleCloudPlatform/python-docs-samples.git
 echo "${RED_TEXT}${BOLD_TEXT}Navigating to the hello_world directory...${RESET_FORMAT}"
 cd python-docs-samples/appengine/standard_python3/hello_world/
 
-# Step 5: Create an App Engine application (Task 1: Explicitly set to europe-west4)
-echo "${BLUE_TEXT}${BOLD_TEXT}Creating App Engine application in europe-west4 (Task 1)...${RESET_FORMAT}"
-gcloud app create --project=$DEVSHELL_PROJECT_ID --region=europe-west4
+# Fetch the assigned region from Qwiklabs environment variables
+echo "${BLUE_TEXT}${BOLD_TEXT}Fetching assigned Qwiklabs Region...${RESET_FORMAT}"
+REGION=$(gcloud compute project-info describe \
+--format="value(commonInstanceMetadata.items[google-compute-default-region])")
+
+# If the metadata is empty, fallback to the zone variable and strip the last letter
+if [ -z "$REGION" ]; then
+    ZONE=$(gcloud compute project-info describe \
+    --format="value(commonInstanceMetadata.items[google-compute-default-zone])")
+    REGION=${ZONE::-2}
+fi
+
+echo "Deploying to region: $REGION"
+
+# Step 5: Create an App Engine application using the dynamic region
+echo "${BLUE_TEXT}${BOLD_TEXT}Creating App Engine application (Task 1)...${RESET_FORMAT}"
+gcloud app create --project=$DEVSHELL_PROJECT_ID --region=$REGION
 
 # Step 6: Deploy the application
 echo "${MAGENTA_TEXT}${BOLD_TEXT}Deploying the application (This takes a minute)...${RESET_FORMAT}"
