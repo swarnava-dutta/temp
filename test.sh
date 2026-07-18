@@ -19,10 +19,18 @@ echo "${CYAN_TEXT}${BOLD_TEXT}    SUBSCRIBE TECH & CODE - INITIATING LAB EXECUTI
 echo "${CYAN_TEXT}${BOLD_TEXT}==================================================================${RESET_FORMAT}"
 echo
 
-# Prompt user for Tester Email needed for Task 4
-echo "${YELLOW_TEXT}${BOLD_TEXT}To complete Task 4, please enter the Tester Account Email (Username 2 from the lab instructions):${RESET_FORMAT}"
-read -p "Tester Email: " TESTER_EMAIL
+# Prompt user for Region and Tester Email
+echo "${YELLOW_TEXT}${BOLD_TEXT}1. Look at Task 1 in your lab manual and find the REGION (e.g., europe-west4)${RESET_FORMAT}"
+read -p "Enter Region: " APP_REGION
+
 echo
+echo "${YELLOW_TEXT}${BOLD_TEXT}2. Look at the left panel in Qwiklabs and find Username 2${RESET_FORMAT}"
+read -p "Enter Tester Email: " TESTER_EMAIL
+echo
+
+# CRITICAL FIX: Strip hidden carriage returns (\r) or spaces that cause "Invalid location" errors
+APP_REGION=$(echo "$APP_REGION" | tr -d '[:space:]' | tr -d '\r')
+TESTER_EMAIL=$(echo "$TESTER_EMAIL" | tr -d '[:space:]' | tr -d '\r')
 
 # Step 1: Enable the IAP (Identity-Aware Proxy) service
 echo "${GREEN_TEXT}${BOLD_TEXT}Enabling the IAP API...${RESET_FORMAT}"
@@ -34,30 +42,16 @@ gcloud config set project $DEVSHELL_PROJECT_ID
 
 # Step 3: Clone the Python sample application repository
 echo "${CYAN_TEXT}${BOLD_TEXT}Cloning the Python sample application repository...${RESET_FORMAT}"
-rm -rf python-docs-samples # Clears directory in case script is run multiple times
+rm -rf python-docs-samples 
 git clone https://github.com/GoogleCloudPlatform/python-docs-samples.git
 
 # Step 4: Navigate to the hello_world directory
 echo "${RED_TEXT}${BOLD_TEXT}Navigating to the hello_world directory...${RESET_FORMAT}"
 cd python-docs-samples/appengine/standard_python3/hello_world/
 
-# Fetch the assigned region from Qwiklabs environment variables
-echo "${BLUE_TEXT}${BOLD_TEXT}Fetching assigned Qwiklabs Region...${RESET_FORMAT}"
-REGION=$(gcloud compute project-info describe \
---format="value(commonInstanceMetadata.items[google-compute-default-region])")
-
-# If the metadata is empty, fallback to the zone variable and strip the last letter
-if [ -z "$REGION" ]; then
-    ZONE=$(gcloud compute project-info describe \
-    --format="value(commonInstanceMetadata.items[google-compute-default-zone])")
-    REGION=${ZONE::-2}
-fi
-
-echo "Deploying to region: $REGION"
-
-# Step 5: Create an App Engine application using the dynamic region
-echo "${BLUE_TEXT}${BOLD_TEXT}Creating App Engine application (Task 1)...${RESET_FORMAT}"
-gcloud app create --project=$DEVSHELL_PROJECT_ID --region=$REGION
+# Step 5: Create an App Engine application
+echo "${BLUE_TEXT}${BOLD_TEXT}Creating App Engine application in region: $APP_REGION (Task 1)...${RESET_FORMAT}"
+gcloud app create --project=$DEVSHELL_PROJECT_ID --region=$APP_REGION
 
 # Step 6: Deploy the application
 echo "${MAGENTA_TEXT}${BOLD_TEXT}Deploying the application (This takes a minute)...${RESET_FORMAT}"
